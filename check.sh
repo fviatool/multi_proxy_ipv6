@@ -1,5 +1,5 @@
 check_current_ports_and_proxies() {
-  echo "Checking Current Ports and Proxies..."
+  echo "Tiến Hành Kiểm tra các cổng và proxy hiện tại..."
 
   # Lấy danh sách các cổng mở
   open_ports=($(netstat -tuln | awk '$4 ~ /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+/ {split($4, a, ":"); print a[2]}'))
@@ -10,8 +10,8 @@ check_current_ports_and_proxies() {
   # Thay thế 'your_proxy_command' bằng lệnh thực tế bạn sử dụng để kiểm tra trạng thái proxy
   proxy_status=$(your_actual_proxy_command)
 
-  echo "Total Ports: $total_ports"
-  echo "Proxy Status: $proxy_status"
+  echo "Tổng Ports: $total_ports"
+  echo "Tổng Proxy Status: $proxy_status"
 
   # Hiển thị danh sách các cổng mở
   echo "Open Ports:"
@@ -19,5 +19,5 @@ check_current_ports_and_proxies() {
     echo "$port"
   done
 
-  echo "Check completed."
+  echo "Check Hoàn Tất."
 }
