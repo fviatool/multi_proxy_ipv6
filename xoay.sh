@@ -27,7 +27,7 @@ install_3proxy() {
 
 download_proxy() {
     cd /home/cloudfly
-    curl -F "file=@proxy.txt" https://file.io
+    curl -F "file=@proxy.txt" https://transfer.sh
 }
 
 gen_3proxy() {
@@ -56,9 +56,7 @@ EOF
 }
 
 gen_proxy_file_for_user() {
-    cat >proxy.txt <<EOF
-$(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
-EOF
+    awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA} > proxy.txt
 }
 
 gen_data() {
@@ -70,15 +68,11 @@ gen_data() {
 }
 
 gen_iptables() {
-    cat <<EOF
-    $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
-EOF
+    awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}
 }
 
 gen_ifconfig() {
-    cat <<EOF
-$(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
-EOF
+    awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA}
 }
 
 rotate_proxies() {
@@ -98,7 +92,7 @@ rotate_and_restart() {
             /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg -sstop
             /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg -h$IP4 -e$IPV6 -p$i
         done
-        sleep 600  # Sleep for 10 minutes
+        sleep 900  # Sleep for 15 minutes (900 seconds)
     done
 }
 
@@ -138,7 +132,7 @@ while :; do
     fi
 done
 
-LAST_PORT=$(($FIRST_PORT + 750))
+LAST_PORT=$(($FIRST_PORT + 10000))
 echo "LAST_PORT is $LAST_PORT. Continuing..."
 
 gen_data >$WORKDIR/data.txt
