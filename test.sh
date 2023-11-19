@@ -132,6 +132,12 @@ CONFIG_FILE="/etc/app_config.conf"
 PROXY_CONFIG_FILE="/etc/3proxy/3proxy.cfg"
 LOG_FILE="/var/log/3proxy.log"
 
+#!/bin/bash
+
+CONFIG_FILE="/etc/app_config.conf"
+PROXY_CONFIG_FILE="/etc/3proxy/3proxy.cfg"
+LOG_FILE="/var/log/3proxy.log"
+
 display_menu() {
   clear
   echo "========== Menu Quản lý 3Proxy =========="
@@ -141,12 +147,13 @@ display_menu() {
   echo "[4] Bật xoay tự động"
   echo "[5] Tạo và Tải Proxy"
   echo "[6] Hiển thị danh sách Proxy"
-  echo "[7] Thoát"
+  echo "[7] Tải về danh sách Proxy"
+  echo "[8] Thoát"
   echo "=========================================="
 }
 
 menu_option() {
-  read -p "Nhập lựa chọn của bạn [1-7]: " choice
+  read -p "Nhập lựa chọn của bạn [1-8]: " choice
   case $choice in
     1) enable_ip_authentication ;;
     2) disable_ip_authentication ;;
@@ -154,7 +161,8 @@ menu_option() {
     4) enable_auto_rotate ;;
     5) create_and_download_proxies ;;
     6) show_proxy_list ;;
-    7) exit ;;
+    7) download_proxy_list ;;
+    8) exit ;;
     *) echo "Lựa chọn không hợp lệ. Vui lòng chọn lại." ;;
   esac
 }
@@ -235,13 +243,19 @@ create_and_download_proxies() {
 
 download_proxy() {
   echo "Downloading proxies..."
-  curl -F "file=@$PROXY_CONFIG_FILE" https://transfer.sh > downloaded_proxies.txt
+  curl -F "$PROXY_CONFIG_FILE" https://transfer.sh > proxy.txt
   echo "Proxies downloaded successfully."
 }
 
 show_proxy_list() {
   echo "Proxy List:"
-  cat proxy.txt
+  cat "$PROXY_CONFIG_FILE"
+}
+
+download_proxy_list() {
+  echo "Tải về danh sách Proxy..."
+  curl -F "$PROXY_CONFIG_FILE" https://transfer.sh > proxy.txt
+  echo "Đã tải về danh sách Proxy."
 }
 
 rotate_proxies() {
