@@ -132,12 +132,6 @@ CONFIG_FILE="/etc/app_config.conf"
 PROXY_CONFIG_FILE="/etc/3proxy/3proxy.cfg"
 LOG_FILE="/var/log/3proxy.log"
 
-#!/bin/bash
-
-CONFIG_FILE="/etc/app_config.conf"
-PROXY_CONFIG_FILE="/etc/3proxy/3proxy.cfg"
-LOG_FILE="/var/log/3proxy.log"
-
 display_menu() {
   clear
   echo "========== Menu Quản lý 3Proxy =========="
