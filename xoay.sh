@@ -152,7 +152,7 @@ enable_auto_rotate
 
 # Adjusted menu
 show_menu() {
-    clear
+    show_menu
     echo "Menu:"
     echo "1. Tạo proxy và cập nhật"
     echo "2. Xoay proxy tự động"
