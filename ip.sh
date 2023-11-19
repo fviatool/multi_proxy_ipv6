@@ -1,7 +1,8 @@
-#!/bin/bash
+
+ #!/bin/bash
 
 CONFIG_FILE="/etc/app_config.conf"
-PROXY_CONFIG_FILE="/etc/3proxy/3proxy.cfg"
+PROXY_CONFIG_FILE="/usr/local/etc/3proxy/3proxy.cfg"
 LOG_FILE="/var/log/3proxy.log"
 
 random() {
@@ -190,8 +191,7 @@ enable_auto_rotate() {
   auto_rotate=true
 
   while [ "$auto_rotate" = true ]; do
-    rotate_proxies
-    sleep 600  # Sleep for 10 minutes
+    rotate_proxies sleep 600  # Sleep for 10 minutes
   done
 
   echo "Auto Rotate disabled."
