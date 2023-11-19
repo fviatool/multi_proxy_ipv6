@@ -237,7 +237,7 @@ create_and_download_proxies() {
 
 download_proxy() {
   echo "Downloading proxies..."
-  curl -F "$PROXY_CONFIG_FILE" https://transfer.sh > proxy.txt
+  curl https://transfer.sh/$(basename "$PROXY_CONFIG_FILE") -o proxy.txt
   echo "Proxies downloaded successfully."
 }
 
@@ -248,7 +248,7 @@ show_proxy_list() {
 
 download_proxy_list() {
   echo "Tải về danh sách Proxy..."
-  curl -F "$PROXY_CONFIG_FILE" https://transfer.sh > proxy.txt
+  curl https://transfer.sh/$(basename "$PROXY_CONFIG_FILE") -o proxy.txt
   echo "Đã tải về danh sách Proxy."
 }
 
