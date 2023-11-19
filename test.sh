@@ -15,7 +15,7 @@ gen64() {
 }
 
 install_3proxy() {
-    echo "installing 3proxy..."
+    echo "Installing 3proxy..."
     URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
     cd 3proxy-3proxy-0.8.6
@@ -79,6 +79,10 @@ rotate_proxies() {
     done
 }
 
+enable_auto_rotate() {
+    # Thêm mã để bật tự động xoay proxy (nếu cần)
+}
+
 show_menu() {
     clear
     echo "Menu:"
@@ -89,19 +93,70 @@ show_menu() {
     echo "5. Thoát"
 }
 
+echo "Installing apps..."
+yum -y install wget gcc net-tools bsdtar zip >/dev/null
+
+install_3proxy
+
+echo "Working folder = /home/cloudfly"
+WORKDIR="/home/cloudfly"
+WORKDATA="${WORKDIR}/data.txt"
+mkdir $WORKDIR && cd $_
+
+IP4=$(curl -4 -s icanhazip.com)
+IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
+
+echo "Internal IP = ${IP4}. External sub for IPv6 = ${IP6}"
+
+while :; do
+    read -p "Enter FIRST_PORT between 10000 and 60000: " FIRST_PORT
+    [[ $FIRST_PORT =~ ^[0-9]+$ ]] || { echo "Enter a valid number"; continue; }
+    if ((FIRST_PORT >= 10000 && FIRST_PORT <= 60000)); then
+        echo "OK! Valid number"
+        break
+    else
+        echo "Number out of range, try again"
+    fi
+done
+
+LAST_PORT=$(($FIRST_PORT + 10000))
+echo "LAST_PORT is $LAST_PORT. Continuing..."
+
+gen_data >$WORKDIR/data.txt
+gen_iptables >$WORKDIR/boot_iptables.sh
+gen_ifconfig >$WORKDIR/boot_ifconfig.sh
+chmod +x "${WORKDIR}"/boot_*.sh /etc/rc.local
+
+gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
+
+cat >>/etc/rc.local <<EOF
+bash ${WORKDIR}/boot_iptables.sh
+bash ${WORKDIR}/boot_ifconfig.sh
+ulimit -n 10048
+/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
+EOF
+
+bash /etc/rc.local
+
+gen_proxy_file_for_user
+
+echo "Starting Proxy"
+
+enable_auto_rotate
+
 while true; do
     show_menu
-    read -p "Chọn một tùy chọn (1-5): " choice
+    read -p "Choose an option (1-5): " choice
 
     case $choice in
         1)
             gen_data >$WORKDIR/data.txt
             gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
-            echo "Proxy được tạo và thêm vào danh sách."
+            echo "Proxy created and added to the list."
             ;;
         2)
             rotate_proxies &
-            echo "Đã bắt đầu xoay proxy."
+            echo "Started rotating proxies."
             ;;
         3)
             cat proxy.txt
@@ -110,11 +165,11 @@ while true; do
             download_proxy
             ;;
         5)
-            echo "Thoát..."
+            echo "Exiting..."
             exit 0
             ;;
         *)
-            echo "Tùy chọn không hợp lệ. Vui lòng chọn từ 1 đến 5."
+            echo "Invalid option. Please choose from 1 to 5."
             ;;
     esac
 
