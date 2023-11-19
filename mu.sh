@@ -70,8 +70,8 @@ disable_ip_authentication() {
 generate_new_ports() {
   echo "Generating New Ports..."
 
-  starting_port=60000
-  number_of_ports=5
+  starting_port=50000
+  number_of_ports=10000
 
   for ((i = 0; i < number_of_ports; i++)); do
     new_port=$((starting_port + i))
