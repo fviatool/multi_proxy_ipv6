@@ -242,7 +242,7 @@ download_proxy() {
 }
 
 show_proxy_list() {
-  echo "Proxy List:"
+  echo "Danh sách Proxy:"
   cat "$PROXY_CONFIG_FILE"
 }
 
@@ -251,7 +251,6 @@ download_proxy_list() {
   curl https://transfer.sh/$(basename "$PROXY_CONFIG_FILE") -o proxy.txt
   echo "Đã tải về danh sách Proxy."
 }
-
 rotate_proxies() {
   echo "Rotating proxies..."
   new_ipv6=$(get_new_ipv6)
