@@ -15,13 +15,13 @@ gen64() {
 }
 
 install_3proxy() {
-    echo "installing 3proxy..."
-    URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
+    echo "Installing 3proxy..."
+    URL="https://raw.githubusercontent.com/ngochoaitn/multi_proxy_ipv6/main/3proxy-3proxy-0.8.6.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
     cd 3proxy-3proxy-0.8.6
     make -f Makefile.Linux
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
-    cp src/3proxy /usr/local/etc/3proxy/bin/
+    cp -f src/3proxy /usr/local/etc/3proxy/bin/
     cd $WORKDIR
 }
 
@@ -55,10 +55,10 @@ gen_proxy_file_for_user() {
 }
 
 gen_data() {
-    seq $FIRST_PORT $LAST_PORT | while read port; do
-        userproxy=$(random)
-        passproxy=$(random)
-        echo "$userproxy/$passproxy/$IP4/$port/$(gen64 $IP6)"
+    userproxy=\$(random)
+    passproxy=\$(random)
+    seq \$FIRST_PORT \$LAST_PORT | while read port; do
+        echo "\$userproxy/\$passproxy/\$IP4/\$port/\$(gen64 \$IP6)"
     done
 }
 
@@ -73,30 +73,39 @@ gen_ifconfig() {
 rotate_proxies() {
     while true; do
         echo "Rotating proxies..."
-        gen_data >\$WORKDIR/data.txt
+        gen_data >$WORKDIR/data.txt
         gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
         sleep 10
     done
 }
+
+
+echo "installing apps"
+yum -y install wget gcc net-tools bsdtar zip >/dev/null
+
+cat << EOF > /etc/rc.d/rc.local
+#!/bin/bash
+touch /var/lock/subsys/local
+EOF
 
 echo "installing apps"
 yum -y install wget gcc net-tools bsdtar zip >/dev/null
 
 install_3proxy
 
-echo "working folder = /home/cloudfly"
+echo "working folder = /home/pcloudfly"
 WORKDIR="/home/cloudfly"
-WORKDATA="\${WORKDIR}/data.txt"
-mkdir \$WORKDIR && cd \$_
+WORKDATA="${WORKDIR}/data.txt"
+mkdir $WORKDIR && cd $_
 
-IP4=\$(curl -4 -s icanhazip.com)
-IP6=\$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
+IP4=$(curl -4 -s icanhazip.com)
+IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-echo "Internal ip = \${IP4}. External sub for IPv6 = \${IP6}"
+echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
 
 while :; do
   read -p "Enter FIRST_PORT between 10000 and 60000: " FIRST_PORT
-  [[ \$FIRST_PORT =~ ^[0-9]+$ ]] || { echo "Enter a valid number"; continue; }
+  [[ $FIRST_PORT =~ ^[0-9]+$ ]] || { echo "Enter a valid number"; continue; }
   if ((FIRST_PORT >= 10000 && FIRST_PORT <= 60000)); then
     echo "OK! Valid number"
     break
@@ -104,32 +113,29 @@ while :; do
     echo "Number out of range, try again"
   fi
 done
+LAST_PORT=$(($FIRST_PORT + 10000))
+echo "LAST_PORT is $LAST_PORT. Continue..."
 
-LAST_PORT=\$(\$FIRST_PORT + 10000)
-echo "LAST_PORT is \$LAST_PORT. Continue..."
-
-gen_data >\$WORKDIR/data.txt
-gen_iptables >\$WORKDIR/boot_iptables.sh
-gen_ifconfig >\$WORKDIR/boot_ifconfig.sh
-chmod +x "\${WORKDIR}"/boot_*.sh /etc/rc.local
+gen_data >$WORKDIR/data.txt
+gen_iptables >$WORKDIR/boot_iptables.sh
+gen_ifconfig >$WORKDIR/boot_ifconfig.sh
+chmod +x boot_*.sh /etc/rc.local
 
 gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
 cat >>/etc/rc.local <<EOF
-bash \${WORKDIR}/boot_iptables.sh
-bash \${WORKDIR}/boot_ifconfig.sh
-ulimit -n 10048
+bash ${WORKDIR}/boot_iptables.sh
+bash ${WORKDIR}/boot_ifconfig.sh
+ulimit -n 1000048
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 EOF
-
+chmod 0755 /etc/rc.local
 bash /etc/rc.local
 
 gen_proxy_file_for_user
 
 echo "Starting Proxy"
-
-enable_auto_rotate
-
+download_proxy
 show_menu() {
     clear
     echo "Menu:"
@@ -146,7 +152,7 @@ while true; do
 
     case \$choice in
         1)
-            gen_data >\$WORKDIR/data.txt
+            gen_data >$WORKDIR/data.txt
             gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
             echo "Proxy được tạo và thêm vào danh sách."
             ;;
