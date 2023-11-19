@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 random() {
@@ -25,11 +25,6 @@ install_3proxy() {
     cd $WORKDIR
 }
 
-download_proxy() {
-    cd /home/cloudfly || exit 1
-    curl -F "file=@proxy.txt" https://transfer.sh
-}
-
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
         echo "//$IP4/$port/$(gen64 $IP6)"
@@ -39,12 +34,6 @@ gen_data() {
 gen_iptables() {
     cat <<EOF
 $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
-EOF
-}
-
-gen_ifconfig() {
-    cat <<EOF
-$(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
 
@@ -142,7 +131,7 @@ while :; do
     fi
 done
 
-LAST_PORT=$(($FIRST_PORT + 750))
+LAST_PORT=$(($FIRST_PORT + 10000))
 echo "LAST_PORT là $LAST_PORT. Tiếp tục..."
 
 gen_data >${WORKDIR}/data.txt
