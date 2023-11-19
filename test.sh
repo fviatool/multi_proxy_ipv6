@@ -253,11 +253,11 @@ download_proxy_list() {
 }
 
 rotate_proxies() {
-  echo "Xoay Proxy..."
+  echo "Rotating proxies..."
   new_ipv6=$(get_new_ipv6)
   update_3proxy_config "$new_ipv6"
   restart_3proxy
-  echo "Proxy đã được xoay thành công."
+  echo "Proxies rotated successfully."
 }
 
 get_new_ipv6() {
@@ -271,7 +271,7 @@ update_3proxy_config() {
 }
 
 restart_3proxy() {
-  # Logic của bạn để khởi động lại dịch vụ 3proxy
+  # Your logic to restart the 3proxy service
   systemctl restart 3proxy.service
 }
 
