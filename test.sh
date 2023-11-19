@@ -73,12 +73,11 @@ gen_ifconfig() {
 rotate_proxies() {
     while true; do
         echo "Rotating proxies..."
-        gen_data >$WORKDIR/data.txt
+        gen_data >\$WORKDIR/data.txt
         gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
         sleep 10
     done
 }
-
 
 echo "installing apps"
 yum -y install wget gcc net-tools bsdtar zip >/dev/null
@@ -95,17 +94,17 @@ install_3proxy
 
 echo "working folder = /home/pcloudfly"
 WORKDIR="/home/cloudfly"
-WORKDATA="${WORKDIR}/data.txt"
-mkdir $WORKDIR && cd $_
+WORKDATA="\${WORKDIR}/data.txt"
+mkdir \$WORKDIR && cd \$_
 
-IP4=$(curl -4 -s icanhazip.com)
-IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
+IP4=\$(curl -4 -s icanhazip.com)
+IP6=\$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
+echo "Internal ip = \${IP4}. External sub for IPv6 = \${IP6}"
 
 while :; do
   read -p "Enter FIRST_PORT between 10000 and 60000: " FIRST_PORT
-  [[ $FIRST_PORT =~ ^[0-9]+$ ]] || { echo "Enter a valid number"; continue; }
+  [[ \$FIRST_PORT =~ ^[0-9]+$ ]] || { echo "Enter a valid number"; continue; }
   if ((FIRST_PORT >= 10000 && FIRST_PORT <= 60000)); then
     echo "OK! Valid number"
     break
@@ -113,19 +112,20 @@ while :; do
     echo "Number out of range, try again"
   fi
 done
-LAST_PORT=$(($FIRST_PORT + 10000))
-echo "LAST_PORT is $LAST_PORT. Continue..."
 
-gen_data >$WORKDIR/data.txt
-gen_iptables >$WORKDIR/boot_iptables.sh
-gen_ifconfig >$WORKDIR/boot_ifconfig.sh
+LAST_PORT=\$((FIRST_PORT + 10000))
+echo "LAST_PORT is \$LAST_PORT. Continue..."
+
+gen_data >\$WORKDIR/data.txt
+gen_iptables >\$WORKDIR/boot_iptables.sh
+gen_ifconfig >\$WORKDIR/boot_ifconfig.sh
 chmod +x boot_*.sh /etc/rc.local
 
 gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
 cat >>/etc/rc.local <<EOF
-bash ${WORKDIR}/boot_iptables.sh
-bash ${WORKDIR}/boot_ifconfig.sh
+bash \${WORKDIR}/boot_iptables.sh
+bash \${WORKDIR}/boot_ifconfig.sh
 ulimit -n 1000048
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 EOF
@@ -152,7 +152,7 @@ while true; do
 
     case \$choice in
         1)
-            gen_data >$WORKDIR/data.txt
+            gen_data >\$WORKDIR/data.txt
             gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
             echo "Proxy được tạo và thêm vào danh sách."
             ;;
