@@ -55,10 +55,10 @@ gen_proxy_file_for_user() {
 }
 
 gen_data() {
-    userproxy=\$(random)
-    passproxy=\$(random)
-    seq \$FIRST_PORT \$LAST_PORT | while read port; do
-        echo "\$userproxy/\$passproxy/\$IP4/\$port/\$(gen64 \$IP6)"
+    seq $FIRST_PORT $LAST_PORT | while read port; do
+        userproxy=$(random)
+        passproxy=$(random)
+        echo "$userproxy/$passproxy/$IP4/$port/$(gen64 $IP6)"
     done
 }
 
