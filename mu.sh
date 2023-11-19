@@ -106,15 +106,14 @@ create_and_download_proxies() {
 }
 
 download_proxy() {
-  # Your logic for downloading proxies
-  # Example: curl -F "file=@$PROXY_CONFIG_FILE" https://transfer.sh
   echo "Downloading proxies..."
+  curl -F "file=@$PROXY_CONFIG_FILE" https://transfer.sh > downloaded_proxies.txt
+  echo "Proxies downloaded successfully."
 }
 
 show_proxy_list() {
   echo "Proxy List:"
-  # Your logic to display the proxy list
-  # Example: cat proxy.txt
+  cat proxy.txt
 }
 
 rotate_proxies() {
