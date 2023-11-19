@@ -149,11 +149,13 @@ chmod 0755 /etc/rc.local
 bash /etc/rc.local
 
 enable_auto_rotate
+
+# Adjusted menu
 show_menu() {
     clear
     echo "Menu:"
-    echo "1. Tạo proxy và tải về"
-    echo "2. Xoay proxy"
+    echo "1. Tạo proxy và cập nhật"
+    echo "2. Xoay proxy tự động"
     echo "3. Hiển thị danh sách proxy"
     echo "4. Tải về danh sách proxy"
     echo "5. Thoát"
@@ -163,15 +165,15 @@ while true; do
     show_menu
     read -p "Chọn một tùy chọn (1-5): " choice
 
-    case \$choice in
+    case $choice in
         1)
-            gen_data >\$WORKDIR/data.txt
+            gen_data >${WORKDIR}/data.txt
             gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
-            echo "Proxy được tạo và thêm vào danh sách."
+            echo "Proxy được tạo và cập nhật vào danh sách."
             ;;
         2)
             rotate_proxies &
-            echo "Đã bắt đầu xoay proxy."
+            echo "Đã bắt đầu xoay proxy tự động."
             ;;
         3)
             cat proxy.txt
@@ -185,8 +187,7 @@ while true; do
             ;;
         *)
             echo "Tùy chọn không hợp lệ. Vui lòng chọn từ 1 đến 5."
-            ;;
-    esac
+            ;;    esac
 
     sleep 2
 done
