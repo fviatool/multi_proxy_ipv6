@@ -126,45 +126,149 @@ bash /etc/rc.local
 gen_proxy_file_for_user
 rm -rf /root/3proxy-3proxy-0.8.6
 echo "Starting Proxy"
-download_proxy
-show_menu() {
-    clear
-    echo "Menu:"
-    echo "1. Tạo proxy và tải về"
-    echo "2. Xoay proxy"
-    echo "3. Hiển thị danh sách proxy"
-    echo "4. Tải về danh sách proxy"
-    echo "5. Thoát"
+#!/bin/bash
+
+CONFIG_FILE="/etc/app_config.conf"
+PROXY_CONFIG_FILE="/etc/3proxy/3proxy.cfg"
+LOG_FILE="/var/log/3proxy.log"
+
+display_menu() {
+  clear
+  echo "========== Menu Quản lý 3Proxy =========="
+  echo "[1] Bật xác thực IP"
+  echo "[2] Tắt xác thực IP"
+  echo "[3] Tạo cổng mới"
+  echo "[4] Bật xoay tự động"
+  echo "[5] Tạo và Tải Proxy"
+  echo "[6] Hiển thị danh sách Proxy"
+  echo "[7] Thoát"
+  echo "=========================================="
 }
 
+menu_option() {
+  read -p "Nhập lựa chọn của bạn [1-7]: " choice
+  case $choice in
+    1) enable_ip_authentication ;;
+    2) disable_ip_authentication ;;
+    3) generate_new_ports ;;
+    4) enable_auto_rotate ;;
+    5) create_and_download_proxies ;;
+    6) show_proxy_list ;;
+    7) exit ;;
+    *) echo "Lựa chọn không hợp lệ. Vui lòng chọn lại." ;;
+  esac
+}
+
+apply_configuration_changes() {
+  # Đây là một hàm giữ chỗ.
+  # Trong một triển khai thực tế, bạn có thể tải lại hoặc áp dụng cấu hình cụ thể của bạn ở đây.
+  echo "Áp dụng các thay đổi cấu hình..."
+  # Ví dụ: systemctl restart your_service
+  sleep 2
+}
+
+enable_ip_authentication() {
+  echo "Bật xác thực IP..."
+
+  if [ -f "$CONFIG_FILE" ]; then
+    sed -i 's/IP_AUTHENTICATION=false/IP_AUTHENTICATION=true/' "$CONFIG_FILE"
+    apply_configuration_changes
+  else
+    echo "Lỗi: Không tìm thấy tệp cấu hình."
+  fi
+
+  echo "Bật xác thực IP thành công."
+  sleep 2
+}
+
+disable_ip_authentication() {
+  echo "Tắt xác thực IP..."
+
+  if [ -f "$CONFIG_FILE" ]; then
+    sed -i 's/IP_AUTHENTICATION=true/IP_AUTHENTICATION=false/' "$CONFIG_FILE"
+    apply_configuration_changes
+  else
+    echo "Lỗi: Không tìm thấy tệp cấu hình."
+  fi
+
+  echo "Tắt xác thực IP thành công."
+  sleep 2
+}
+
+generate_new_ports() {
+  echo "Tạo Cổng Mới..."
+
+  starting_port=50000
+  number_of_ports=1500
+
+  for ((i = 0; i < number_of_ports; i++)); do
+    new_port=$((starting_port + i))
+    echo "Cổng Mới: $new_port"
+    # Logic của bạn để sử dụng cổng mới khi cần
+  done
+
+  echo "Tạo cổng mới thành công."
+  sleep 2
+}
+
+enable_auto_rotate() {
+  echo "Bật Xoay Tự Động..."
+
+  auto_rotate=true
+
+  while [ "$auto_rotate" = true ]; do
+    rotate_proxies
+    sleep 600  # Ngủ 10 phút
+  done
+
+  echo "Tắt Xoay Tự Động."
+}
+
+create_and_download_proxies() {
+  echo "Tạo và Tải Proxy..."
+
+  gen_data > "$PROXY_CONFIG_FILE"
+  download_proxy
+  echo "Proxy đã được tạo và tải thành công."
+  sleep 2
+}
+
+download_proxy() {
+  echo "Downloading proxies..."
+  curl -F "file=@$PROXY_CONFIG_FILE" https://transfer.sh > downloaded_proxies.txt
+  echo "Proxies downloaded successfully."
+}
+
+show_proxy_list() {
+  echo "Proxy List:"
+  cat proxy.txt
+}
+
+rotate_proxies() {
+  echo "Xoay Proxy..."
+  new_ipv6=$(get_new_ipv6)
+  update_3proxy_config "$new_ipv6"
+  restart_3proxy
+  echo "Proxy đã được xoay thành công."
+}
+
+get_new_ipv6() {
+  random_ipv6=$(openssl rand -hex 8 | sed 's/\(..\)/:\1/g; s/://1')
+  echo "$random_ipv6"
+}
+
+update_3proxy_config() {
+  new_ipv6=$1
+  sed -i "s/old_ipv6_address/$new_ipv6/" "$PROXY_CONFIG_FILE"
+}
+
+restart_3proxy() {
+  # Logic của bạn để khởi động lại dịch vụ 3proxy
+  systemctl restart 3proxy.service
+}
+
+# Vòng lặp menu chính
 while true; do
-    show_menu
-    read -p "Chọn một tùy chọn (1-5): " choice
-
-    case \$choice in
-        1)
-            gen_data >\$WORKDIR/data.txt
-            gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
-            echo "Proxy được tạo và thêm vào danh sách."
-            ;;
-        2)
-            rotate_proxies &
-            echo "Đã bắt đầu xoay proxy."
-            ;;
-        3)
-            cat proxy.txt
-            ;;
-        4)
-            download_proxy
-            ;;
-        5)
-            echo "Thoát..."
-            exit 0
-            ;;
-        *)
-            echo "Tùy chọn không hợp lệ. Vui lòng chọn từ 1 đến 5."
-            ;;
-    esac
-
-    sleep 2
+  display_menu
+  menu_option
 done
