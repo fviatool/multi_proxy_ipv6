@@ -29,7 +29,7 @@ install_3proxy() {
 
 download_proxy() {
     cd /home/cloudfly
-    curl -F "file=@proxy.txt" https://file.io
+    curl -F "file=@proxy.txt" https://transfer.sh
 }
 
 gen_3proxy() {
@@ -69,16 +69,6 @@ gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
         echo "$userproxy/$passproxy/$IP4/$port/$(gen64 $IP6)"
     done
-}
-
-upload_proxy() {
-    local PASS=$(random)
-    zip --password $PASS proxy.zip proxy.txt
-    URL=$(curl -s --upload-file proxy.zip https://transfer.sh/proxy.zip)
-
-    echo "Proxy đã sẵn sàng! Định dạng IP:PORT:TÀI KHOẢN:MẬT KHẨU"
-    echo "Tải xuống từ đường dẫn: ${URL}"
-    echo "Mật khẩu: ${PASS}"
 }
 
 gen_iptables() {
@@ -131,7 +121,7 @@ echo "LAST_PORT is $LAST_PORT. Continuing..."
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
-chmod +x boot_*.sh /etc/rc.local
+chmod +x ${WORKDIR}/boot_*.sh /etc/rc.local
 
 gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
