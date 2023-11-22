@@ -71,6 +71,16 @@ gen_data() {
     done
 }
 
+upload_proxy() {
+    local PASS=$(random)
+    zip --password $PASS proxy.zip proxy.txt
+    URL=$(curl -s --upload-file proxy.zip https://transfer.sh/proxy.zip)
+
+    echo "Proxy đã sẵn sàng! Định dạng IP:PORT:TÀI KHOẢN:MẬT KHẨU"
+    echo "Tải xuống từ đường dẫn: ${URL}"
+    echo "Mật khẩu: ${PASS}"
+}
+
 gen_iptables() {
     cat <<EOF
 $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
