@@ -74,9 +74,11 @@ $(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
 
-cat << EOF > /etc/rc.d/rc.local
-#!/bin/bash
-touch /var/lock/subsys/local
+cat >> /etc/rc.local <<EOF
+bash ${WORKDIR}/boot_iptables.sh
+bash ${WORKDIR}/boot_ifconfig.sh
+ulimit -n 10048
+/usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 EOF
 
 echo "installing apps"
@@ -104,7 +106,7 @@ while :; do
     echo "Number out of range, try again"
   fi
 done
-LAST_PORT=$(($FIRST_PORT + 1500))
+LAST_PORT=$(($FIRST_PORT + 3000))
 echo "LAST_PORT is $LAST_PORT. Continue..."
 
 gen_data >$WORKDIR/data.txt
@@ -236,19 +238,20 @@ create_and_download_proxies() {
 }
 
 download_proxy() {
-  echo "Downloading proxies..."
-  curl https://transfer.sh/$(basename "$PROXY_CONFIG_FILE") -o proxy.txt
-  echo "Proxies downloaded successfully."
+    echo "Downloading proxies..."
+    curl -F "$PROXY_CONFIG_FILE" https://transfer.sh > proxy.txt
+    echo "Proxies downloaded successfully."
+}
 }
 
 show_proxy_list() {
   echo "Danh sách Proxy:"
-  cat "$PROXY_CONFIG_FILE"
+  cat proxy.txt
 }
 
 download_proxy_list() {
   echo "Tải về danh sách Proxy..."
-  curl https://transfer.sh/$(basename "$PROXY_CONFIG_FILE") -o proxy.txt
+  curl -F "$PROXY_CONFIG_FILE" https://transfer.sh > proxy.txt
   echo "Đã tải về danh sách Proxy."
 }
 rotate_proxies() {
