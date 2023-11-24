@@ -26,7 +26,10 @@ install_3proxy() {
     #chkconfig 3proxy on
     cd $WORKDIR
 }
-
+download_proxy() {
+cd /home/cloudfly
+curl -F "file=@proxy.txt" https://file.io
+}
 gen_3proxy() {
     cat <<EOF
 daemon
@@ -41,9 +44,12 @@ setgid 65535
 setuid 65535
 stacksize 6291456 
 flush
+auth strong
 
-$(awk -F "/" '{print "\n" \
-"" $1 "\n" \
+users $(awk -F "/" 'BEGIN{ORS="";} {print $1 ":CL:" $2 " "}' ${WORKDATA})
+
+$(awk -F "/" '{print "auth strong\n" \
+"allow " $1 "\n" \
 "proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
 "flush\n"}' ${WORKDATA})
 EOF
@@ -58,7 +64,7 @@ EOF
 
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "//$IP4/$port/$(gen64 $IP6)"
+        echo "user$port/$(random)/$IP4/$port/$(gen64 $IP6)"
     done
 }
 
@@ -73,6 +79,13 @@ gen_ifconfig() {
 $(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
+echo "installing apps"
+yum -y install wget gcc net-tools bsdtar zip >/dev/null
+
+cat << EOF > /etc/rc.d/rc.local
+#!/bin/bash
+touch /var/lock/subsys/local
+EOF
 
 echo "installing apps"
 yum -y install wget gcc net-tools bsdtar zip >/dev/null
@@ -105,7 +118,7 @@ echo "LAST_PORT is $LAST_PORT. Continue..."
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
-chmod +x boot_*.sh /etc/rc.local
+chmod +x $WORKDIR/boot_*.sh /etc/rc.local
 
 gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
