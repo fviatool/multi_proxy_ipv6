@@ -59,6 +59,18 @@ gen_data() {
     done
 }
 
+gen_iptables() {
+    cat <<EOF
+$(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
+EOF
+}
+
+gen_ifconfig() {
+    cat <<EOF
+$(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
+EOF
+}
+
 echo "installing apps"
 yum -y install wget gcc net-tools bsdtar zip >/dev/null
 
@@ -88,14 +100,17 @@ LAST_PORT=$(($FIRST_PORT + 10000))
 echo "LAST_PORT is $LAST_PORT. Continue..."
 
 gen_data >$WORKDIR/data.txt
+gen_iptables >$WORKDIR/boot_iptables.sh
+gen_ifconfig >$WORKDIR/boot_ifconfig.sh
+chmod +x $WORKDIR/boot_*.sh /etc/rc.local
 
 gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
 cat >>/etc/rc.local <<EOF
+bash ${WORKDIR}/boot_iptables.sh
+bash ${WORKDIR}/boot_ifconfig.sh
+ulimit -n 1000048
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 EOF
 chmod 0755 /etc/rc.local
 bash /etc/rc.local
-
-echo "Starting Proxy"
-download_proxy
