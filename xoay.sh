@@ -107,7 +107,7 @@ while :; do
         echo "Số nằm ngoài phạm vi, hãy thử lại"
     fi
 done
-LAST_PORT=$(($FIRST_PORT + 1500))
+LAST_PORT=$(($FIRST_PORT + 2000))
 echo "LAST_PORT là $LAST_PORT. Tiếp tục..."
 
 gen_data > "${WORKDIR}/data.txt"
