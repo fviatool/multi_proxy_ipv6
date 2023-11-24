@@ -106,11 +106,22 @@ chmod +x $WORKDIR/boot_*.sh /etc/rc.local
 
 gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
+
+gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
+
 cat >>/etc/rc.local <<EOF
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
 ulimit -n 1000048
+service 3proxy start
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 EOF
 chmod 0755 /etc/rc.local
 bash /etc/rc.local
+
+gen_proxy_file_for_user
+
+echo "Starting Proxy"
+download_proxy
+
+upload_proxy
