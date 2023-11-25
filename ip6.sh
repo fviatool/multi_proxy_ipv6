@@ -136,14 +136,14 @@ read COUNT
 FIRST_PORT=20000
 LAST_PORT=$(($FIRST_PORT + $COUNT))
 
-gen_data >$DATA_FILE
-gen_iptables >$WORKDIR/boot_iptables.sh
-gen_ifconfig >$WORKDIR/boot_ifconfig.sh
+gen_data > $DATA_FILE
+gen_iptables > $WORKDIR/boot_iptables.sh
+gen_ifconfig > $WORKDIR/boot_ifconfig.sh
 chmod +x ${WORKDIR}/boot_*.sh /etc/rc.local
 
 gen_3proxy > "/usr/local/etc/3proxy/3proxy.cfg"
 
-cat >>/etc/rc.local <<EOF
+cat >> /etc/rc.local <<EOF
 bash ${WORKDIR}/boot_iptables.sh
 ulimit -n 10048
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
@@ -154,8 +154,6 @@ bash /etc/rc.local
 
 gen_proxy_file_for_user
 rm -rf /root/3proxy-3proxy-0.8.6
-
-dow_proxy
 
 echo "Setting up rotation script..."
 
