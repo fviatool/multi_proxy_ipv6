@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/sh
+
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 random() {
@@ -7,6 +8,7 @@ random() {
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
+
 gen64() {
     ip64() {
         echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
@@ -25,46 +27,47 @@ install_3proxy() {
     cd $WORKDIR
 }
 
+download_proxy() {
+cd /home/cloudfly
+curl -F "file=@proxy.txt" https://transfer.sh
+}
+
 gen_3proxy() {
     cat <<EOF
 daemon
-maxconn 1000
+maxconn 2000
+nserver 1.1.1.1
+nserver 8.8.4.4
+nserver 2001:4860:4860::8888
+nserver 2001:4860:4860::8844
 nscache 65536
 timeouts 1 5 30 60 180 1800 15 60
 setgid 65535
 setuid 65535
+stacksize 6291456 
 flush
-auth none
-proxy -6 -n -a -p3128 -i$IP4 -e$IP6
-EOF
-}
 
-gen_proxy_file_for_user() {
-    cat >proxy.txt <<EOF
-$(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
+$(awk -F "/" '{print "allow " $1 "\n" \
+"proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
+"flush\n"}' ${WORKDATA})
 EOF
-}
-
-dow_proxy() {
-    cd /home/proxy
-    curl -F "file=@proxy.txt" https://transfer.sh
 }
 
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "$IP4/$port/$(gen64 $IP6)"
+        echo "$IP6/$port/$(gen64 $IP6)"
     done
 }
 
 gen_iptables() {
     cat <<EOF
-$(awk -F "/" '{print "ip6tables -I INPUT -p tcp --dport " $2 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
+$(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
 EOF
 }
 
 gen_ifconfig() {
     cat <<EOF
-$(awk -F "/" '{print "ifconfig eth0 inet6 add " $3 "/64"}' ${WORKDATA})
+$(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
 
@@ -113,15 +116,17 @@ WORKDATA="${WORKDIR}/data.txt"
 DATA_FILE="${WORKDIR}/data.txt"
 
 echo "installing apps"
-yum -y install gcc net-tools bsdtar zip >/dev/null
+yum -y install wget gcc net-tools bsdtar zip >/dev/null
 
-echo "working folder = ${WORKDIR}"
+install_3proxy
+
+echo "working folder = /home/proxy"
 mkdir $WORKDIR && cd $_
 
-IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-echo "Internal ip = ${IP4}. External sub for IPv6 = ${IP6}"
+echo "External sub for ip6 = ${IP6}"
+
 
 echo "How many proxies do you want to create? Example 10000"
 read COUNT
@@ -139,6 +144,7 @@ gen_3proxy > "/usr/local/etc/3proxy/3proxy.cfg"
 cat >> /etc/rc.local <<EOF
 bash ${WORKDIR}/boot_iptables.sh
 ulimit -n 10048
+service 3proxy start
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 EOF
 
