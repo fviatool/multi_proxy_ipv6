@@ -171,10 +171,11 @@ ulimit -n 10048
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 EOF
 
-
+chmod 0755 /etc/rc.local
 bash /etc/rc.local
 
 gen_proxy_file_for_user
+rm -rf /root/3proxy-3proxy-0.8.6
 
 dow_proxy
 
