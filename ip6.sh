@@ -110,33 +110,6 @@ add_rotation_cronjob() {
     echo "Cronjob added for IPv6 rotation every 10 minutes."
 }
 
-menu() {
-    clear
-    echo "1. Check Live Proxies"
-    echo "2. Rotate IPv6 Addresses"
-    echo "3. Download Proxy List"
-    echo "4. Exit"
-    read -p "Enter your choice: " choice
-    case $choice in
-        1)
-            check_live_proxy
-            ;;
-        2)
-            rotate_ipv6
-            ;;
-        3)
-            dow_proxy
-            ;;
-        4)
-            echo "Exiting..."
-            exit
-            ;;
-        *)
-            echo "Invalid choice. Please enter a valid option."
-            ;;
-    esac
-}
-
 WORKDIR="/home/proxy"
 WORKDATA="${WORKDIR}/data.txt"
 DATA_FILE="${WORKDIR}/data.txt"
@@ -192,3 +165,30 @@ chmod +x ${WORKDIR}/rotate_proxies.sh
 add_rotation_cronjob
 
 echo "Setup Hoàn Tất."
+# Adjusted menu
+show_menu() {
+    clear
+    echo "1. Check Live Proxies"
+    echo "2. Rotate IPv6 Addresses"
+    echo "3. Download Proxy List"
+    echo "4. Exit"
+    read -p "Enter your choice: " choice
+    case $choice in
+        1)
+            check_live_proxy
+            ;;
+        2)
+            rotate_ipv6
+            ;;
+        3)
+            dow_proxy
+            ;;
+        4)
+            echo "Exiting..."
+            exit
+            ;;
+        *)
+            echo "Invalid choice. Please enter a valid option."
+            ;;
+    esac
+}
