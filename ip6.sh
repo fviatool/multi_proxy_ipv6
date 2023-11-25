@@ -61,7 +61,10 @@ gen_data() {
 
 gen_iptables() {
     cat <<EOF
-$(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
+iptables -A INPUT -p tcp --dport 3128 -m state --state NEW -j ACCEPT
+iptables -A INPUT -p tcp --dport 1080 -m state --state NEW -j ACCEPT
+iptables -A INPUT -p tcp --dport 8080 -m state --state NEW -j ACCEPT
+$(awk -F "/" '{print "iptables -A INPUT -p tcp --dport " $4 " -s " $3 " -m state --state NEW -j ACCEPT"}' ${WORKDATA})
 EOF
 }
 
