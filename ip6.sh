@@ -14,7 +14,6 @@ gen64() {
     echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
 
-
 install_3proxy() {
     echo "installing 3proxy"
     URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
@@ -25,7 +24,6 @@ install_3proxy() {
     cp src/3proxy /usr/local/etc/3proxy/bin/
     cd $WORKDIR
 }
-
 
 gen_3proxy() {
     cat <<EOF
@@ -165,6 +163,7 @@ chmod +x ${WORKDIR}/rotate_proxies.sh
 add_rotation_cronjob
 
 echo "Setup Hoàn Tất."
+
 # Adjusted menu
 show_menu() {
     clear
@@ -192,3 +191,8 @@ show_menu() {
             ;;
     esac
 }
+
+# Loop to display the menu
+while true; do
+    show_menu
+done
