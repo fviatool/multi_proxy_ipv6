@@ -1,6 +1,4 @@
-#!/bin/sh
-
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+#!/bin/bash
 
 random() {
     tr </dev/urandom -dc A-Za-z0-9 | head -c5
@@ -17,7 +15,7 @@ gen64() {
 }
 
 install_3proxy() {
-    echo "installing 3proxy"
+    echo "Installing 3proxy..."
     URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
     cd 3proxy-3proxy-0.8.6
@@ -25,11 +23,6 @@ install_3proxy() {
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
     cp src/3proxy /usr/local/etc/3proxy/bin/
     cd $WORKDIR
-}
-
-download_proxy() {
-cd /home/cloudfly
-curl -F "file=@proxy.txt" https://transfer.sh
 }
 
 gen_3proxy() {
@@ -53,6 +46,15 @@ $(awk -F "/" '{print "allow " $1 "\n" \
 EOF
 }
 
+gen_proxy_file_for_user() {
+    awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA} > proxy.txt
+}
+
+dow_proxy() {
+    cd /home/proxy
+    curl -F "file=@proxy.txt" https://transfer.sh
+}
+
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
         echo "$IP6/$port/$(gen64 $IP6)"
@@ -69,14 +71,11 @@ EOF
 }
 
 gen_ifconfig() {
-    cat <<EOF
-$(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
-EOF
+    awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA}
 }
 
 check_live_proxy() {
     echo "Checking live proxies..."
-
     while IFS= read -r proxy_info; do
         IFS='/' read -ra proxy <<< "$proxy_info"
         ip="${proxy[0]}"
