@@ -80,9 +80,6 @@ $(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
 
-echo "installing apps"
-yum -y install wget gcc net-tools bsdtar zip >/dev/null
-
 cat << EOF > /etc/rc.d/rc.local
 #!/bin/bash
 touch /var/lock/subsys/local
@@ -126,8 +123,8 @@ add_rotation_cronjob() {
 }
 
 # Tự động xoay proxy sau mỗi 10 phút
-(crontab -l ; echo "*/10 * * * * ${WORKDIR}/rotate_proxies.sh") | crontab -
 
+(crontab -l ; echo "*/10 * * * * ${WORKDIR}/rotate_proxies.sh") | crontab -
 echo "installing apps"
 yum -y install wget gcc net-tools bsdtar zip >/dev/null
 
