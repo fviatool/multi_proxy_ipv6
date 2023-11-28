@@ -1,6 +1,11 @@
 #!/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
+install_required_packages() {
+    echo "Installing necessary packages..."
+    yum -y install wget gcc net-tools bsdtar zip >/dev/null
+}
+
 install_3proxy() {
     echo "Installing 3proxy..."
     URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
@@ -60,21 +65,18 @@ echo 'restart_3proxy' >> "$rotate_script"
 chmod +x "$rotate_script"
 
 # Add rotation to crontab for automatic rotation
+
 add_rotation_cronjob() {
     echo "*/10 * * * * $rotate_script" >> /etc/crontab
 }
 
-echo "Installing necessary packages..."
-yum -y install wget gcc net-tools bsdtar zip >/dev/null
+command -v wget >/dev/null 2>&1 || { echo >&2 "wget is required but not installed. Aborting."; exit 1; }
+command -v gcc >/dev/null 2>&1 || { echo >&2 "gcc is required but not installed. Aborting."; exit 1; }
+command -v bsdtar >/dev/null 2>&1 || { echo >&2 "bsdtar is required but not installed. Aborting."; exit 1; }
 
-cat << EOF > /etc/rc.d/rc.local
-#!/bin/bash
-touch /var/lock/subsys/local
-EOF
-
+install_required_packages
 install_3proxy
 
-echo "Working directory = /home/cloudfly"
 WORKDIR="/home/cloudfly"
 WORKDATA="${WORKDIR}/data.txt"
 mkdir "$WORKDIR" && cd "$_"
@@ -94,12 +96,12 @@ while :; do
         echo "Number is outside the range, please try again"
     fi
 done
+
 LAST_PORT=$(($FIRST_PORT + 2000))
 echo "LAST_PORT is $LAST_PORT. Continuing..."
 
 gen_data > "${WORKDIR}/data.txt"
 gen_iptables > "${WORKDIR}/boot_iptables.sh"
-
 gen_3proxy > "/usr/local/etc/3proxy/3proxy.cfg"
 
 cat >> /etc/rc.local <<EOF
