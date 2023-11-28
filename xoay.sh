@@ -29,6 +29,25 @@ $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state 
 EOF
 }
 
+dow_proxy() {
+    cd /home/proxy
+    curl -F "file=@proxy.txt" https://transfer.sh
+}
+
+
+gen_iptables() {
+    cat <<EOF
+iptables -A INPUT -p tcp --dport 3128 -m state --state NEW -j ACCEPT
+iptables -A INPUT -p tcp --dport 1080 -m state --state NEW -j ACCEPT
+iptables -A INPUT -p tcp --dport 8080 -m state --state NEW -j ACCEPT
+$(awk -F "/" '{print "iptables -A INPUT -p tcp --dport " $4 " -s " $3 " -m state --state NEW -j ACCEPT"}' ${WORKDATA})
+EOF
+}
+
+gen_ifconfig() {
+    awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA}
+}
+
 gen_3proxy() {
     cat <<EOF
 daemon
