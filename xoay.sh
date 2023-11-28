@@ -1,21 +1,8 @@
 #!/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-random() {
-    tr </dev/urandom -dc A-Za-z0-9 | head -c5
-    echo
-}
-
-array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
-gen64() {
-    ip64() {
-        echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
-    }
-    echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
-}
-
 install_3proxy() {
-    echo "installing 3proxy"
+    echo "Installing 3proxy..."
     URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
     cd 3proxy-3proxy-0.8.6
@@ -87,7 +74,7 @@ EOF
 
 install_3proxy
 
-echo "Thư mục làm việc = /home/cloudfly"
+echo "Working directory = /home/cloudfly"
 WORKDIR="/home/cloudfly"
 WORKDATA="${WORKDIR}/data.txt"
 mkdir "$WORKDIR" && cd "$_"
@@ -95,20 +82,20 @@ mkdir "$WORKDIR" && cd "$_"
 IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-echo "IP nội bộ = ${IP4}. Subnet IPv6 ngoại trời = ${IP6}"
+echo "Internal IP = ${IP4}. External IPv6 subnet = ${IP6}"
 
 while :; do
-    read -p "Nhập FIRST_PORT từ 10000 đến 60000: " FIRST_PORT
-    [[ $FIRST_PORT =~ ^[0-9]+$ ]] || { echo "Nhập một số hợp lệ"; continue; }
+    read -p "Enter FIRST_PORT from 10000 to 60000: " FIRST_PORT
+    [[ $FIRST_PORT =~ ^[0-9]+$ ]] || { echo "Enter a valid number"; continue; }
     if ((FIRST_PORT >= 10000 && FIRST_PORT <= 60000)); then
-        echo "OK! Số hợp lệ"
+        echo "OK! Valid number"
         break
     else
-        echo "Số nằm ngoài phạm vi, hãy thử lại"
+        echo "Number is outside the range, please try again"
     fi
 done
 LAST_PORT=$(($FIRST_PORT + 2000))
-echo "LAST_PORT là $LAST_PORT. Tiếp tục..."
+echo "LAST_PORT is $LAST_PORT. Continuing..."
 
 gen_data > "${WORKDIR}/data.txt"
 gen_iptables > "${WORKDIR}/boot_iptables.sh"
