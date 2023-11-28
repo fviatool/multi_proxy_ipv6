@@ -17,37 +17,6 @@ install_3proxy() {
     cd $WORKDIR
 }
 
-gen_data() {
-    seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "//$IP4/$port/$(gen64 $IP6)"
-    done
-}
-
-gen_iptables() {
-    cat <<EOF
-$(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
-EOF
-}
-
-dow_proxy() {
-    cd /home/proxy
-    curl -F "file=@proxy.txt" https://transfer.sh
-}
-
-
-gen_iptables() {
-    cat <<EOF
-iptables -A INPUT -p tcp --dport 3128 -m state --state NEW -j ACCEPT
-iptables -A INPUT -p tcp --dport 1080 -m state --state NEW -j ACCEPT
-iptables -A INPUT -p tcp --dport 8080 -m state --state NEW -j ACCEPT
-$(awk -F "/" '{print "iptables -A INPUT -p tcp --dport " $4 " -s " $3 " -m state --state NEW -j ACCEPT"}' ${WORKDATA})
-EOF
-}
-
-gen_ifconfig() {
-    awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA}
-}
-
 gen_3proxy() {
     cat <<EOF
 daemon
@@ -63,18 +32,40 @@ setuid 65535
 stacksize 6291456 
 flush
 
-$(awk -F "/" '{print "\n" \
-"" $1 "\n" \
+$(awk -F "/" '{print "allow " $1 "\n" \
 "proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
 "flush\n"}' ${WORKDATA})
 EOF
 }
 
 gen_proxy_file_for_user() {
-    cat >proxy.txt <<EOF
-$(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
+    awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA} > proxy.txt
+}
+
+dow_proxy() {
+    cd /home/proxy
+    curl -F "file=@proxy.txt" https://transfer.sh
+}
+
+gen_data() {
+    seq $FIRST_PORT $LAST_PORT | while read port; do
+        echo "$IP6/$port/$(gen64 $IP6)"
+    done
+}
+
+gen_iptables() {
+    cat <<EOF
+iptables -A INPUT -p tcp --dport 3128 -m state --state NEW -j ACCEPT
+iptables -A INPUT -p tcp --dport 1080 -m state --state NEW -j ACCEPT
+iptables -A INPUT -p tcp --dport 8080 -m state --state NEW -j ACCEPT
+$(awk -F "/" '{print "iptables -A INPUT -p tcp --dport " $4 " -s " $3 " -m state --state NEW -j ACCEPT"}' ${WORKDATA})
 EOF
 }
+
+gen_ifconfig() {
+    awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA}
+}
+
 
 rotate_script="${WORKDIR}/rotate_proxies.sh"
 echo '#!/bin/bash' > "$rotate_script"
