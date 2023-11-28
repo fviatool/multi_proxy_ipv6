@@ -79,6 +79,7 @@ gen_ifconfig() {
 $(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
+
 echo "installing apps"
 yum -y install wget gcc net-tools bsdtar zip >/dev/null
 
@@ -86,6 +87,46 @@ cat << EOF > /etc/rc.d/rc.local
 #!/bin/bash
 touch /var/lock/subsys/local
 EOF
+
+gen_ifconfig() {
+    cat <<EOF
+$(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
+EOF
+}
+
+rotate_proxy_script() {
+    cat <<EOF
+#!/bin/sh
+service 3proxy restart
+EOF
+}
+
+rotate_ipv6() {
+    echo "Rotating IPv6 addresses..."
+    new_ipv6=$(get_new_ipv6)
+    update_3proxy_config "$new_ipv6"
+    service 3proxy restart
+    echo "3proxy restarted successfully."
+    echo "IPv6 rotation completed."
+}
+
+get_new_ipv6() {
+    random_ipv6=$(openssl rand -hex 8 | sed 's/\(..\)/:\1/g; s/://1')
+    echo "$random_ipv6"
+}
+
+update_3proxy_config() {
+    new_ipv6=$1
+    sed -i "s/old_ipv6_address/$new_ipv6/" /usr/local/etc/3proxy/3proxy.cfg
+}
+
+add_rotation_cronjob() {
+    echo "*/10 * * * * root ${WORKDIR}/rotate_proxies.sh" >> /etc/crontab
+    echo "Cronjob added for IPv6 rotation every 10 minutes."
+}
+
+# Tự động xoay proxy sau mỗi 10 phút
+(crontab -l ; echo "*/10 * * * * ${WORKDIR}/rotate_proxies.sh") | crontab -
 
 echo "installing apps"
 yum -y install wget gcc net-tools bsdtar zip >/dev/null
@@ -112,13 +153,13 @@ while :; do
     echo "Number out of range, try again"
   fi
 done
-LAST_PORT=$(($FIRST_PORT + 3500))
+LAST_PORT=$(($FIRST_PORT + 10000))
 echo "LAST_PORT is $LAST_PORT. Continue..."
 
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
-chmod +x boot_*.sh /etc/rc.local
+chmod +x $WORKDIR/boot_*.sh /etc/rc.local
 
 gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
