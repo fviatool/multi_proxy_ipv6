@@ -53,18 +53,28 @@ $(awk -F "/" '{print "allow " $1 "\n" \
 EOF
 }
 
+gen_data() {
+    seq $FIRST_PORT $LAST_PORT | while read port; do
+        echo "$IP6/$port/$(gen64 $IP6)"
+    done
+}
+
 gen_iptables() {
     cat <<EOF
-iptables -A INPUT -p tcp --dport 3128 -m state --state NEW -j ACCEPT
-iptables -A INPUT -p tcp --dport 1080 -m state --state NEW -j ACCEPT
-iptables -A INPUT -p tcp --dport 8080 -m state --state NEW -j ACCEPT
-$(awk -F "/" '{print "iptables -A INPUT -p tcp --dport " $4 " -s " $3 " -m state --state NEW -j ACCEPT"}' ${WORKDATA})
+$(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
 EOF
 }
 
 gen_ifconfig() {
-    awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA}
+    cat <<EOF
+$(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
+EOF
 }
+
+echo "installing apps"
+yum -y install wget gcc net-tools bsdtar zip >/dev/null
+
+install_3proxy
 
 rotate_script="${WORKDIR}/rotate_proxies.sh"
 echo '#!/bin/bash' > "$rotate_script"
@@ -83,8 +93,6 @@ command -v wget >/dev/null 2>&1 || { echo >&2 "wget is required but not installe
 command -v gcc >/dev/null 2>&1 || { echo >&2 "gcc is required but not installed. Aborting."; exit 1; }
 command -v bsdtar >/dev/null 2>&1 || { echo >&2 "bsdtar is required but not installed. Aborting."; exit 1; }
 
-install_required_packages
-install_3proxy
 
 WORKDIR="/home/cloudfly"
 WORKDATA="${WORKDIR}/data.txt"
@@ -109,19 +117,27 @@ done
 LAST_PORT=$(($FIRST_PORT + 2000))
 echo "LAST_PORT is $LAST_PORT. Continuing..."
 
-gen_data > "${WORKDIR}/data.txt"
-gen_iptables > "${WORKDIR}/boot_iptables.sh"
-gen_3proxy > "/usr/local/etc/3proxy/3proxy.cfg"
+gen_data >$WORKDIR/data.txt
+gen_iptables >$WORKDIR/boot_iptables.sh
+gen_ifconfig >$WORKDIR/boot_ifconfig.sh
+chmod +x $WORKDIR/boot_*.sh /etc/rc.local
 
-cat >> /etc/rc.local <<EOF
+gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
+
+
+gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
+
+cat >>/etc/rc.local <<EOF
 bash ${WORKDIR}/boot_iptables.sh
-ulimit -n 10048
+bash ${WORKDIR}/boot_ifconfig.sh
+ulimit -n 1000048
+service 3proxy start
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 EOF
-
 chmod 0755 /etc/rc.local
 bash /etc/rc.local
 
 gen_proxy_file_for_user
-rm -rf /root/3proxy-3proxy-0.8.6
+
 echo "Starting Proxy"
+download_proxy
