@@ -110,17 +110,16 @@ rm -rf /root/3proxy-3proxy-0.8.6
 
 echo "Starting Proxy"
 
-
-
 #!/bin/bash
 
 WORKDIR="/home/cloudfly"
 WORKDATA="${WORKDIR}/data.txt"
+PROXY_LIST_FILE="${WORKDIR}/ipv6.txt"
 
 create_proxy() {
     echo "Tạo proxy IPv6..."
     new_ipv6=$(get_new_ipv6)
-    echo "$new_ipv6" >> data.txt
+    echo "$new_ipv6" >> $WORKDATA
     echo "Proxy mới được tạo: $new_ipv6"
 }
 
@@ -131,6 +130,7 @@ rotate_ipv6() {
     service 3proxy restart
     echo "3proxy restarted successfully."
     echo "IPv6 rotation completed."
+    echo "$new_ipv6" >> $PROXY_LIST_FILE
 }
 
 get_new_ipv6() {
@@ -163,7 +163,7 @@ while true; do
             ;;
         3)
             echo "Hiển thị danh sách proxy:"
-            cat proxy_list.txt
+            cat $PROXY_LIST_FILE
             ;;
         4)
             echo "Chọn 4: Thoát"
