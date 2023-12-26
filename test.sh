@@ -96,32 +96,28 @@ while :; do
     fi
 done
 
-LAST_PORT=$(($FIRST_PORT + 4444))
-echo "LAST_PORT is $LAST_PORT. Continue..."
+LAST_PORT=$(($FIRST_PORT + 3333))
+echo "LAST_PORT là $LAST_PORT. Tiếp tục..."
 
-gen_data >$WORKDIR/data.txt
+gen_data >$WORKDIR/ipv6.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
-chmod +x $WORKDIR/boot_*.sh /etc/rc.local
-
-gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
-
+chmod +x boot_*.sh /etc/rc.local
 
 gen_3proxy >/usr/local/etc/3proxy/3proxy.cfg
 
 cat >>/etc/rc.local <<EOF
 bash ${WORKDIR}/boot_iptables.sh
 bash ${WORKDIR}/boot_ifconfig.sh
-ulimit -n 1000048
-service 3proxy start
+ulimit -n 10048
 /usr/local/etc/3proxy/bin/3proxy /usr/local/etc/3proxy/3proxy.cfg
 EOF
-chmod 0755 /etc/rc.local
+
 bash /etc/rc.local
 
 gen_proxy_file_for_user
+rm -rf /root/3proxy-3proxy-0.8.6
+
 
 echo "Starting Proxy"
 download_proxy
-
-upload_proxy
