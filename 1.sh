@@ -2,19 +2,21 @@
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 random() {
-	tr </dev/urandom -dc A-Za-z0-9 | head -c5
-	echo
+    tr </dev/urandom -dc A-Za-z0-9 | head -c5
+    echo
 }
 
 array=(1 2 3 4 5 6 7 8 9 0 a b c d e f)
+
 gen64() {
-	ip64() {
-		echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
-	}
-	echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
+    ip64() {
+        echo "${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}${array[$RANDOM % 16]}"
+    }
+    echo "$1:$(ip64):$(ip64):$(ip64):$(ip64)"
 }
+
 install_3proxy() {
-    echo "installing 3proxy"
+    echo "Đang cài đặt 3proxy..."
     URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
     cd 3proxy-3proxy-0.8.6
@@ -22,6 +24,11 @@ install_3proxy() {
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
     cp src/3proxy /usr/local/etc/3proxy/bin/
     cd $WORKDIR
+}
+
+download_proxy() {
+    cd /home/cloudfly
+    curl -F "file=@proxy.txt" https://transfer.sh
 }
 
 gen_3proxy() {
@@ -69,34 +76,34 @@ $(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
 
-echo "installing apps"
+echo "Đang cài đặt các ứng dụng cần thiết..."
 yum -y install gcc net-tools bsdtar zip >/dev/null
 
 install_3proxy
 
-echo "working folder = /home/cloudfly"
+echo "Thư mục làm việc = /home/cloudfly"
 WORKDIR="/home/cloudfly"
-WORKDATA="${WORKDIR}/data.txt"
+WORKDATA="${WORKDIR}/ipv6.txt"
 mkdir $WORKDIR && cd $_
 
 IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-echo "Internal IP = ${IP4}. External sub for IPv6 = ${IP6}"
+echo "IP Nội bộ = ${IP4}. Subnet Ngoại vi cho IPv6 = ${IP6}"
 
 while :; do
-    read -p "Enter FIRST_PORT between 10000 and 60000: " FIRST_PORT
-    [[ $FIRST_PORT =~ ^[0-9]+$ ]] || { echo "Enter a valid number"; continue; }
+    read -p "Nhập PORT ĐẦU TIÊN giữa 10000 và 60000: " FIRST_PORT
+    [[ $FIRST_PORT =~ ^[0-9]+$ ]] || { echo "Vui lòng nhập một số hợp lệ"; continue; }
     if ((FIRST_PORT >= 10000 && FIRST_PORT <= 60000)); then
-        echo "OK! Valid number"
+        echo "OK! Số hợp lệ"
         break
     else
-        echo "Number out of range, try again"
+        echo "Số không nằm trong phạm vi, vui lòng thử lại"
     fi
 done
 
 LAST_PORT=$(($FIRST_PORT + 3333))
-echo "LAST_PORT is $LAST_PORT. Continuing..."
+echo "LAST_PORT là $LAST_PORT. Tiếp tục..."
 
 gen_data >$WORKDIR/ipv6.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
@@ -117,4 +124,5 @@ bash /etc/rc.local
 gen_proxy_file_for_user
 rm -rf /root/3proxy-3proxy-0.8.6
 
-echo "Starting Proxy"
+echo "Khởi động Proxy"
+download_proxy
