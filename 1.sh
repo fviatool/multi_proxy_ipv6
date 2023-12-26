@@ -30,7 +30,7 @@ install_3proxy() {
 gen_3proxy() {
     cat <<EOF
 daemon
-maxconn 2000
+maxconn 3000
 nserver 1.1.1.1
 nserver 8.8.4.4
 nserver 2001:4860:4860::8888
@@ -86,7 +86,7 @@ install_3proxy
 
 echo "working folder = /home/cloudfly"
 WORKDIR="/home/cloudfly"
-WORKDATA="${WORKDIR}/data.txt"
+WORKDATA="${WORKDIR}/ipv6.txt"
 mkdir $WORKDIR && cd $_
 
 IP4=$(curl -4 -s icanhazip.com)
