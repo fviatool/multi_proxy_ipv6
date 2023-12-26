@@ -86,7 +86,7 @@ IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
-FIRST_PORT=5001
+FIRST_PORT=3001
 LAST_PORT=10000
 
 gen_data >$WORKDIR/data.txt
@@ -109,69 +109,3 @@ gen_proxy_file_for_user
 rm -rf /root/3proxy-3proxy-0.8.6
 
 echo "Starting Proxy"
-
-#!/bin/bash
-
-WORKDIR="/home/cloudfly"
-WORKDATA="${WORKDIR}/data.txt"
-PROXY_LIST_FILE="${WORKDIR}/ipv6.txt"
-
-create_proxy() {
-    echo "Tạo proxy IPv6..."
-    new_ipv6=$(get_new_ipv6)
-    echo "$new_ipv6" >> $WORKDATA
-    echo "Proxy mới được tạo: $new_ipv6"
-}
-
-rotate_ipv6() {
-    echo "Rotating IPv6 addresses..."
-    new_ipv6=$(get_new_ipv6)
-    update_3proxy_config "$new_ipv6"
-    service 3proxy restart
-    echo "3proxy restarted successfully."
-    echo "IPv6 rotation completed."
-    echo "$new_ipv6" >> $PROXY_LIST_FILE
-}
-
-get_new_ipv6() {
-    random_ipv6=$(openssl rand -hex 8 | sed 's/\(..\)/:\1/g; s/://1')
-    echo "$random_ipv6"
-}
-
-add_rotation_cronjob() {
-    echo "*/10 * * * * root ${WORKDIR}/rotate_proxies.sh" >> /etc/crontab
-    echo "Cronjob added for IPv6 rotation every 10 minutes."
-}
-
-echo "Menu tạo và xoay proxy IPv6"
-echo "---------------------------"
-
-while true; do
-    echo "1. Tạo proxy"
-    echo "2. Xoay proxy"
-    echo "3. Hiển thị danh sách proxy"
-    echo "4. Thoát"
-
-    read -p "Chọn một tùy chọn (1-4): " choice
-
-    case $choice in
-        1)
-            create_proxy
-            ;;
-        2)
-            rotate_ipv6
-            ;;
-        3)
-            echo "Hiển thị danh sách proxy:"
-            cat $PROXY_LIST_FILE
-            ;;
-        4)
-            echo "Chọn 4: Thoát"
-            echo "Tạm biệt!"
-            exit 0
-            ;;
-        *)
-            echo "Lựa chọn không hợp lệ. Vui lòng chọn từ 1 đến 4."
-            ;;
-    esac
-done
