@@ -120,4 +120,104 @@ rm -rf /root/3proxy-3proxy-0.8.6
 
 
 echo "Starting Proxy"
-download_proxy
+
+#!/bin/bash
+
+WORKDIR="/home/cloudfly"
+IFCFG="eth0"
+START_PORT=3001
+MAXCOUNT=10000
+IP_LIST_FILE="$WORKDIR/ipv6.txt"
+LOG_FILE="$WORKDIR/proxy_list.txt"
+
+rotate_ipv6() {
+    if [ ! -f "$IP_LIST_FILE" ]; then
+        echo "Lỗi: Không tìm thấy tệp danh sách IPv6 ($IP_LIST_FILE)"
+        return
+    fi
+
+    selected_ipv6=$(shuf -n 1 "$IP_LIST_FILE")
+
+    if [ -z "$selected_ipv6" ]; then
+        echo "Lựa chọn không hợp lệ. Vui lòng thử lại."
+        return
+    fi
+
+    echo "Đang xoay IPv6: $selected_ipv6"
+    update_3proxy_config "$selected_ipv6"
+    service 3proxy restart
+    echo "3proxy đã được khởi động lại với IPv6 mới: $selected_ipv6"
+    echo "$(date) - Rotated IPv6: $selected_ipv6" >> "$LOG_FILE"
+}
+
+start_3proxy() {
+    gen_3proxy_cfg > /usr/local/etc/3proxy/3proxy.cfg
+    killall 3proxy
+    service 3proxy start
+    echo "$(date) - 3proxy đã được khởi động!" >> "$LOG_FILE"
+}
+
+gen_3proxy_cfg() {
+    echo "daemon"
+    echo "maxconn 3000"
+    echo "nserver 1.1.1.1"
+    echo "nserver 8.8.4.4"
+    echo "nserver 2001:4860:4860::8888"
+    echo "nserver 2001:4860:4860::8844"
+    echo "nscache 65536"
+    echo "timeouts 1 5 30 60 180 1800 15 60"
+    echo "setgid 65535"
+    echo "setuid 65535"
+    echo "stacksize 6291456" 
+    echo "flush"
+
+    port=$START_PORT
+    while read ip; do
+        echo "proxy -6 -n -a -p$port -i$IFCFG -e$ip"
+        ((port+=1))
+    done < "$IP_LIST_FILE"
+}
+
+menu() {
+    clear
+    echo "===== MENU TÙY CHỌN PROXY IPv6 ====="
+    echo "1. Xoay IPv6"
+    echo "2. Tạo Proxy IPv6"
+    echo "3. Hiển thị danh sách Proxy IPv6"
+    echo "4. Thoát"
+    echo "==================================="
+}
+
+check_root() {
+    if [ "$EUID" -ne 0 ]; then
+        echo "Lỗi: Chạy script cần quyền root."
+        exit 1
+    fi
+}
+
+while true; do
+    menu
+    read -p "Chọn tùy chọn (1-4): " choice
+
+    case $choice in
+        1)
+            check_root
+            rotate_ipv6
+            ;;
+        2)
+            check_root
+            start_3proxy
+            ;;
+        3)
+            echo "Hiển thị danh sách Proxy IPv6:"
+            cat "$LOG_FILE"
+            ;;
+        4)
+            echo "Kết thúc chương trình."
+            exit 0
+            ;;
+        *)
+            echo "Lựa chọn không hợp lệ. Vui lòng chọn lại."
+            ;;
+    esac
+done
