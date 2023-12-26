@@ -82,9 +82,21 @@ mkdir $WORKDIR && cd $_
 IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-echo "Internal ip = ${IP4}. External sub for IPv6 = ${IP6}"
-FIRST_PORT=3001
-LAST_PORT=10000
+echo "Internal IP = ${IP4}. External sub for IPv6 = ${IP6}"
+
+while :; do
+    read -p "Enter FIRST_PORT between 10000 and 60000: " FIRST_PORT
+    [[ $FIRST_PORT =~ ^[0-9]+$ ]] || { echo "Enter a valid number"; continue; }
+    if ((FIRST_PORT >= 10000 && FIRST_PORT <= 60000)); then
+        echo "OK! Valid number"
+        break
+    else
+        echo "Number out of range, try again"
+    fi
+done
+
+LAST_PORT=$(($FIRST_PORT + 3333))
+echo "LAST_PORT is $LAST_PORT. Continuing..."
 
 gen_data >$WORKDIR/ipv6.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
