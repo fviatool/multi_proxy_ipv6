@@ -55,7 +55,7 @@ EOF
 
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "$IP6/$port/$(gen64 $IP6)"
+        echo "$IP4:$port/$(gen64 $IP6)"
     done
 }
 
@@ -78,7 +78,7 @@ install_3proxy
 
 echo "Working folder: /home/cloudfly"
 WORKDIR="/home/cloudfly"
-WORKDATA="${WORKDIR}/data.txt"
+WORKDATA="${WORKDIR}/ipv6.txt"
 mkdir $WORKDIR && cd $_
 
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
