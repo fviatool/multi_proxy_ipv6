@@ -21,16 +21,13 @@ install_3proxy() {
     make -f Makefile.Linux
     mkdir -p /usr/local/etc/3proxy/{bin,logs,stat}
     cp src/3proxy /usr/local/etc/3proxy/bin/
-    #cp ./scripts/rc.d/proxy.sh /etc/init.d/3proxy
-    #chmod +x /etc/init.d/3proxy
-    #chkconfig 3proxy on
     cd $WORKDIR
 }
 
 gen_3proxy() {
     cat <<EOF
 daemon
-maxconn 2000
+maxconn 3000
 nserver 1.1.1.1
 nserver 8.8.4.4
 nserver 2001:4860:4860::8888
@@ -54,16 +51,15 @@ $(awk -F "/" '{print $3 ":" $4 ":" $1 ":" $2 }' ${WORKDATA})
 EOF
 }
 
-
 gen_data() {
     seq $FIRST_PORT $LAST_PORT | while read port; do
-        echo "//$IP4/$port/$(gen64 $IP6)"
+        echo "$(gen64 $IP6)"
     done
 }
 
 gen_iptables() {
     cat <<EOF
-    $(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
+$(awk -F "/" '{print "iptables -I INPUT -p tcp --dport " $4 "  -m state --state NEW -j ACCEPT"}' ${WORKDATA}) 
 EOF
 }
 
@@ -72,6 +68,7 @@ gen_ifconfig() {
 $(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
+
 echo "installing apps"
 yum -y install gcc net-tools bsdtar zip >/dev/null
 
@@ -85,11 +82,11 @@ mkdir $WORKDIR && cd $_
 IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
+echo "Internal ip = ${IP4}. External sub for IPv6 = ${IP6}"
 FIRST_PORT=3001
 LAST_PORT=10000
 
-gen_data >$WORKDIR/data.txt
+gen_data >$WORKDIR/ipv6.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
 gen_ifconfig >$WORKDIR/boot_ifconfig.sh
 chmod +x boot_*.sh /etc/rc.local
