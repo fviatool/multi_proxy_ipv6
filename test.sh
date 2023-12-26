@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
@@ -17,7 +17,7 @@ gen64() {
 }
 
 install_3proxy() {
-    echo "installing 3proxy"
+    echo "Installing 3proxy"
     URL="https://github.com/z3APA3A/3proxy/archive/3proxy-0.8.6.tar.gz"
     wget -qO- $URL | bsdtar -xvf-
     cd 3proxy-3proxy-0.8.6
@@ -28,8 +28,8 @@ install_3proxy() {
 }
 
 download_proxy() {
-cd /home/cloudfly
-curl -F "file=@proxy.txt" https://transfer.sh
+    cd /home/cloudfly
+    curl -F "file=@proxy.txt" https://transfer.sh
 }
 
 gen_3proxy() {
@@ -71,19 +71,19 @@ $(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
 
-echo "installing apps"
+echo "Installing apps"
 yum -y install wget gcc net-tools bsdtar zip >/dev/null
 
 install_3proxy
 
-echo "working folder = /home/cloudfly"
+echo "Working folder: /home/cloudfly"
 WORKDIR="/home/cloudfly"
 WORKDATA="${WORKDIR}/data.txt"
 mkdir $WORKDIR && cd $_
 
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
-echo "External sub for ip6 = ${IP6}"
+echo "External sub for IPv6: ${IP6}"
 
 while :; do
     read -p "Enter FIRST_PORT between 10000 and 60000: " FIRST_PORT
@@ -97,7 +97,7 @@ while :; do
 done
 
 LAST_PORT=$(($FIRST_PORT + 3333))
-echo "LAST_PORT là $LAST_PORT. Tiếp tục..."
+echo "LAST_PORT is $LAST_PORT. Continuing..."
 
 gen_data >$WORKDIR/ipv6.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
@@ -115,9 +115,8 @@ EOF
 
 bash /etc/rc.local
 
-gen_proxy_file_for_user
+download_proxy
 rm -rf /root/3proxy-3proxy-0.8.6
-
 
 echo "Starting Proxy"
 
@@ -132,21 +131,20 @@ LOG_FILE="$WORKDIR/proxy_list.txt"
 
 rotate_ipv6() {
     if [ ! -f "$IP_LIST_FILE" ]; then
-        echo "Lỗi: Không tìm thấy tệp danh sách IPv6 ($IP_LIST_FILE)"
+        echo "Error: Cannot find IPv6 list file ($IP_LIST_FILE)"
         return
     fi
 
     selected_ipv6=$(shuf -n 1 "$IP_LIST_FILE")
 
     if [ -z "$selected_ipv6" ]; then
-        echo "Lựa chọn không hợp lệ. Vui lòng thử lại."
+        echo "Invalid selection. Please try again."
         return
     fi
 
-    echo "Đang xoay IPv6: $selected_ipv6"
+    echo "Rotating IPv6: $selected_ipv6"
     update_3proxy_config "$selected_ipv6"
     service 3proxy restart
-    echo "3proxy đã được khởi động lại với IPv6 mới: $selected_ipv6"
     echo "$(date) - Rotated IPv6: $selected_ipv6" >> "$LOG_FILE"
 }
 
@@ -154,7 +152,7 @@ start_3proxy() {
     gen_3proxy_cfg > /usr/local/etc/3proxy/3proxy.cfg
     killall 3proxy
     service 3proxy start
-    echo "$(date) - 3proxy đã được khởi động!" >> "$LOG_FILE"
+    echo "$(date) - 3proxy has been started!" >> "$LOG_FILE"
 }
 
 gen_3proxy_cfg() {
@@ -180,24 +178,24 @@ gen_3proxy_cfg() {
 
 menu() {
     clear
-    echo "===== MENU TÙY CHỌN PROXY IPv6 ====="
-    echo "1. Xoay IPv6"
-    echo "2. Tạo Proxy IPv6"
-    echo "3. Hiển thị danh sách Proxy IPv6"
-    echo "4. Thoát"
+    echo "===== IPv6 PROXY OPTIONS MENU ====="
+    echo "1. Rotate IPv6"
+    echo "2. Start IPv6 Proxy"
+    echo "3. Display IPv6 Proxy List"
+    echo "4. Exit"
     echo "==================================="
 }
 
 check_root() {
     if [ "$EUID" -ne 0 ]; then
-        echo "Lỗi: Chạy script cần quyền root."
+        echo "Error: Running the script requires root privileges."
         exit 1
     fi
 }
 
 while true; do
     menu
-    read -p "Chọn tùy chọn (1-4): " choice
+    read -p "Choose an option (1-4): " choice
 
     case $choice in
         1)
@@ -209,15 +207,15 @@ while true; do
             start_3proxy
             ;;
         3)
-            echo "Hiển thị danh sách Proxy IPv6:"
+            echo "Displaying IPv6 Proxy List:"
             cat "$LOG_FILE"
             ;;
         4)
-            echo "Kết thúc chương trình."
+            echo "Exiting the program."
             exit 0
             ;;
         *)
-            echo "Lựa chọn không hợp lệ. Vui lòng chọn lại."
+            echo "Invalid choice. Please choose again."
             ;;
     esac
 done
