@@ -30,7 +30,7 @@ install_3proxy() {
 gen_3proxy() {
     cat <<EOF
 daemon
-maxconn 3000
+maxconn 2000
 nserver 1.1.1.1
 nserver 8.8.4.4
 nserver 2001:4860:4860::8888
@@ -41,7 +41,6 @@ setgid 65535
 setuid 65535
 stacksize 6291456 
 flush
-
 $(awk -F "/" '{print "\n" \
 "" $1 "\n" \
 "proxy -6 -n -a -p" $4 " -i" $3 " -e"$5"\n" \
@@ -73,39 +72,22 @@ gen_ifconfig() {
 $(awk -F "/" '{print "ifconfig eth0 inet6 add " $5 "/64"}' ${WORKDATA})
 EOF
 }
-
-cat << EOF > /etc/rc.d/rc.local
-#!/bin/bash
-touch /var/lock/subsys/local
-EOF
-
 echo "installing apps"
-yum -y install wget gcc net-tools bsdtar zip >/dev/null
+yum -y install gcc net-tools bsdtar zip >/dev/null
 
 install_3proxy
 
 echo "working folder = /home/cloudfly"
 WORKDIR="/home/cloudfly"
-WORKDATA="${WORKDIR}/ipv6.txt"
+WORKDATA="${WORKDIR}/data.txt"
 mkdir $WORKDIR && cd $_
 
 IP4=$(curl -4 -s icanhazip.com)
 IP6=$(curl -6 -s icanhazip.com | cut -f1-4 -d':')
 
 echo "Internal ip = ${IP4}. Exteranl sub for ip6 = ${IP6}"
-
-while :; do
-  read -p "Enter FIRST_PORT between 10000 and 60000: " FIRST_PORT
-  [[ $FIRST_PORT =~ ^[0-9]+$ ]] || { echo "Enter a valid number"; continue; }
-  if ((FIRST_PORT >= 10000 && FIRST_PORT <= 60000)); then
-    echo "OK! Valid number"
-    break
-  else
-    echo "Number out of range, try again"
-  fi
-done
-LAST_PORT=$(($FIRST_PORT + 3000))
-echo "LAST_PORT is $LAST_PORT. Continue..."
+FIRST_PORT=5001
+LAST_PORT=10000
 
 gen_data >$WORKDIR/data.txt
 gen_iptables >$WORKDIR/boot_iptables.sh
@@ -127,3 +109,69 @@ gen_proxy_file_for_user
 rm -rf /root/3proxy-3proxy-0.8.6
 
 echo "Starting Proxy"
+
+
+
+#!/bin/bash
+
+WORKDIR="/home/cloudfly"
+WORKDATA="${WORKDIR}/data.txt"
+
+create_proxy() {
+    echo "Tạo proxy IPv6..."
+    new_ipv6=$(get_new_ipv6)
+    echo "$new_ipv6" >> data.txt
+    echo "Proxy mới được tạo: $new_ipv6"
+}
+
+rotate_ipv6() {
+    echo "Rotating IPv6 addresses..."
+    new_ipv6=$(get_new_ipv6)
+    update_3proxy_config "$new_ipv6"
+    service 3proxy restart
+    echo "3proxy restarted successfully."
+    echo "IPv6 rotation completed."
+}
+
+get_new_ipv6() {
+    random_ipv6=$(openssl rand -hex 8 | sed 's/\(..\)/:\1/g; s/://1')
+    echo "$random_ipv6"
+}
+
+add_rotation_cronjob() {
+    echo "*/10 * * * * root ${WORKDIR}/rotate_proxies.sh" >> /etc/crontab
+    echo "Cronjob added for IPv6 rotation every 10 minutes."
+}
+
+echo "Menu tạo và xoay proxy IPv6"
+echo "---------------------------"
+
+while true; do
+    echo "1. Tạo proxy"
+    echo "2. Xoay proxy"
+    echo "3. Hiển thị danh sách proxy"
+    echo "4. Thoát"
+
+    read -p "Chọn một tùy chọn (1-4): " choice
+
+    case $choice in
+        1)
+            create_proxy
+            ;;
+        2)
+            rotate_ipv6
+            ;;
+        3)
+            echo "Hiển thị danh sách proxy:"
+            cat proxy_list.txt
+            ;;
+        4)
+            echo "Chọn 4: Thoát"
+            echo "Tạm biệt!"
+            exit 0
+            ;;
+        *)
+            echo "Lựa chọn không hợp lệ. Vui lòng chọn từ 1 đến 4."
+            ;;
+    esac
+done
